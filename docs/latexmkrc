@@ -1,0 +1,16 @@
+# pdfLaTeX, НЕ XeLaTeX (T2A + tempora). Копирано от шаблона на ФКСТ.
+$pdf_mode = 1;
+$bibtex_use = 2;
+$out_dir = 'build';
+$clean_ext = 'bbl nav out snm synctex.gz run.xml';
+
+# Единствената добавка спрямо шаблона, и тя е поправка на проверен дефект.
+# По подразбиране latexmk влиза в build/ и изпълнява bibtex оттам. Тогава
+# references.bib вече не е в текущата папка и MiKTeX го намира по пътя за
+# търсене: C:/Users/.../MiKTeX/bibtex/bib/feupphdteses/references.bib, празен
+# файл от чужд пакет със същото име. Bibtex докладва „You've used 0 entries“
+# БЕЗ грешка, PDF-ът се получава, но списъкът с литература е празен и всички
+# \cite излизат като [?]. Измерено с kpsewhich, не предположено.
+# С bibtex_fudge = 0 bibtex се изпълнява от папката с източника, където
+# локалният файл има предимство.
+$bibtex_fudge = 0;
