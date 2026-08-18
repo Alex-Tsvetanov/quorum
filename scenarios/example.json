@@ -1,0 +1,206 @@
+// Bundled scenario: one planning round of an IT department with twelve
+// candidate projects and roughly a third of the money they ask for.
+//
+// Durations are in weeks, costs in thousands of the reporting currency, demand
+// in engineers held for the length of the activity. Every duration and cost is a
+// three-point estimate, so the same document drives both the deterministic
+// schedule and the Monte Carlo pass.
+{
+  "name": "IT portfolio, planning round",
+  "budget": 1150,
+
+  "criteria": [
+    { "id": "strategic", "direction": "max", "label": "fit with the strategy" },
+    { "id": "roi",       "direction": "max", "label": "expected return" },
+    { "id": "compliance","direction": "max", "label": "regulatory necessity" },
+    { "id": "risk",      "direction": "min", "label": "delivery risk" }
+  ],
+
+  // Pairwise judgements over the criteria, on Saaty's scale. Read row against
+  // column: entry (i,j) is how much more important criterion i is than j.
+  "comparisons": [
+    [1,     0.5,   0.5,   2],
+    [2,     1,     1,     3],
+    [2,     1,     1,     3],
+    [0.5,   0.333, 0.333, 1]
+  ],
+
+  "resources": [
+    { "id": "dev", "label": "engineers available in parallel", "capacity": 26 },
+    { "id": "ops", "label": "operations staff available in parallel", "capacity": 11 }
+  ],
+
+  "projects": [
+    {
+      "id": "P01", "name": "Identity platform migration",
+      "scores": { "strategic": 8, "roi": 4, "compliance": 7, "risk": 6 },
+      "activities": [
+        { "id": "a1", "name": "directory inventory", "optimistic": 2, "likely": 3, "pessimistic": 5,
+          "cost_optimistic": 18, "cost_likely": 22, "cost_pessimistic": 30, "demand": { "dev": 2 } },
+        { "id": "a2", "name": "platform build", "optimistic": 5, "likely": 7, "pessimistic": 12,
+          "cost_optimistic": 70, "cost_likely": 85, "cost_pessimistic": 120,
+          "depends_on": ["a1"], "demand": { "dev": 4, "ops": 1 } },
+        { "id": "a3", "name": "pilot migration", "optimistic": 3, "likely": 4, "pessimistic": 8,
+          "cost_optimistic": 30, "cost_likely": 38, "cost_pessimistic": 55,
+          "depends_on": ["a2"], "demand": { "dev": 3, "ops": 2 } },
+        { "id": "a4", "name": "documentation", "optimistic": 1, "likely": 2, "pessimistic": 3,
+          "cost": 8, "depends_on": ["a2"], "demand": { "dev": 1 } }
+      ]
+    },
+    {
+      "id": "P02", "name": "Single sign-on rollout",
+      "requires": ["P01"],
+      "scores": { "strategic": 7, "roi": 6, "compliance": 6, "risk": 4 },
+      "activities": [
+        { "id": "b1", "name": "application survey", "optimistic": 2, "likely": 2, "pessimistic": 4,
+          "cost": 14, "demand": { "dev": 2 } },
+        { "id": "b2", "name": "connector work", "optimistic": 4, "likely": 6, "pessimistic": 10,
+          "cost_optimistic": 55, "cost_likely": 66, "cost_pessimistic": 90,
+          "depends_on": ["b1"], "demand": { "dev": 4 } },
+        { "id": "b3", "name": "staged cutover", "optimistic": 2, "likely": 3, "pessimistic": 7,
+          "cost_optimistic": 20, "cost_likely": 26, "cost_pessimistic": 42,
+          "depends_on": ["b2"], "demand": { "dev": 2, "ops": 3 } }
+      ]
+    },
+    {
+      "id": "P03", "name": "Data warehouse consolidation",
+      "scores": { "strategic": 9, "roi": 5, "compliance": 4, "risk": 7 },
+      "activities": [
+        { "id": "c1", "name": "source mapping", "optimistic": 3, "likely": 4, "pessimistic": 7,
+          "cost_optimistic": 26, "cost_likely": 34, "cost_pessimistic": 48, "demand": { "dev": 3 } },
+        { "id": "c2", "name": "model rebuild", "optimistic": 6, "likely": 9, "pessimistic": 16,
+          "cost_optimistic": 95, "cost_likely": 120, "cost_pessimistic": 175,
+          "depends_on": ["c1"], "demand": { "dev": 5 } },
+        { "id": "c3", "name": "historic load", "optimistic": 3, "likely": 5, "pessimistic": 11,
+          "cost_optimistic": 40, "cost_likely": 52, "cost_pessimistic": 80,
+          "depends_on": ["c2"], "demand": { "dev": 2, "ops": 2 } },
+        { "id": "c4", "name": "decommission the old store", "optimistic": 1, "likely": 2, "pessimistic": 5,
+          "cost": 12, "depends_on": ["c3"], "demand": { "ops": 2 } }
+      ]
+    },
+    {
+      "id": "P04", "name": "Self-service analytics portal",
+      "requires": ["P03"],
+      "scores": { "strategic": 6, "roi": 8, "compliance": 2, "risk": 4 },
+      "activities": [
+        { "id": "d1", "name": "requirements with the business", "optimistic": 2, "likely": 3, "pessimistic": 5,
+          "cost": 18, "demand": { "dev": 2 } },
+        { "id": "d2", "name": "portal build", "optimistic": 5, "likely": 7, "pessimistic": 11,
+          "cost_optimistic": 62, "cost_likely": 78, "cost_pessimistic": 110,
+          "depends_on": ["d1"], "demand": { "dev": 4 } },
+        { "id": "d3", "name": "training", "optimistic": 1, "likely": 2, "pessimistic": 4,
+          "cost": 15, "depends_on": ["d2"], "demand": { "dev": 1 } }
+      ]
+    },
+    {
+      "id": "P05", "name": "Billing engine rewrite",
+      "excludes": ["P06"],
+      "scores": { "strategic": 7, "roi": 7, "compliance": 5, "risk": 8 },
+      "activities": [
+        { "id": "e1", "name": "rules extraction", "optimistic": 4, "likely": 6, "pessimistic": 12,
+          "cost_optimistic": 48, "cost_likely": 62, "cost_pessimistic": 95, "demand": { "dev": 3 } },
+        { "id": "e2", "name": "engine build", "optimistic": 8, "likely": 12, "pessimistic": 22,
+          "cost_optimistic": 150, "cost_likely": 190, "cost_pessimistic": 280,
+          "depends_on": ["e1"], "demand": { "dev": 6 } },
+        { "id": "e3", "name": "parallel run", "optimistic": 4, "likely": 6, "pessimistic": 12,
+          "cost_optimistic": 45, "cost_likely": 58, "cost_pessimistic": 90,
+          "depends_on": ["e2"], "demand": { "dev": 3, "ops": 2 } }
+      ]
+    },
+    {
+      "id": "P06", "name": "Billing platform from a vendor",
+      "excludes": ["P05"],
+      "scores": { "strategic": 4, "roi": 6, "compliance": 5, "risk": 5 },
+      "activities": [
+        { "id": "f1", "name": "vendor selection", "optimistic": 3, "likely": 4, "pessimistic": 8,
+          "cost": 22, "demand": { "dev": 1 } },
+        { "id": "f2", "name": "integration", "optimistic": 6, "likely": 9, "pessimistic": 16,
+          "cost_optimistic": 105, "cost_likely": 135, "cost_pessimistic": 200,
+          "depends_on": ["f1"], "demand": { "dev": 4, "ops": 1 } },
+        { "id": "f3", "name": "data migration", "optimistic": 3, "likely": 5, "pessimistic": 10,
+          "cost_optimistic": 38, "cost_likely": 48, "cost_pessimistic": 72,
+          "depends_on": ["f2"], "demand": { "dev": 2, "ops": 2 } }
+      ]
+    },
+    {
+      "id": "P07", "name": "Customer portal redesign",
+      "scores": { "strategic": 5, "roi": 7, "compliance": 2, "risk": 3 },
+      "activities": [
+        { "id": "g1", "name": "design", "optimistic": 2, "likely": 3, "pessimistic": 6,
+          "cost": 24, "demand": { "dev": 2 } },
+        { "id": "g2", "name": "front end build", "optimistic": 4, "likely": 6, "pessimistic": 10,
+          "cost_optimistic": 52, "cost_likely": 68, "cost_pessimistic": 95,
+          "depends_on": ["g1"], "demand": { "dev": 4 } },
+        { "id": "g3", "name": "accessibility pass", "optimistic": 1, "likely": 2, "pessimistic": 4,
+          "cost": 16, "depends_on": ["g2"], "demand": { "dev": 1 } }
+      ]
+    },
+    {
+      "id": "P08", "name": "Regulatory reporting automation",
+      "scores": { "strategic": 5, "roi": 3, "compliance": 9, "risk": 4 },
+      "activities": [
+        { "id": "h1", "name": "requirement trace", "optimistic": 2, "likely": 3, "pessimistic": 5,
+          "cost": 20, "demand": { "dev": 2 } },
+        { "id": "h2", "name": "report engine", "optimistic": 5, "likely": 7, "pessimistic": 12,
+          "cost_optimistic": 72, "cost_likely": 92, "cost_pessimistic": 130,
+          "depends_on": ["h1"], "demand": { "dev": 3 } },
+        { "id": "h3", "name": "audit sign-off", "optimistic": 2, "likely": 3, "pessimistic": 7,
+          "cost": 26, "depends_on": ["h2"], "demand": { "dev": 1, "ops": 1 } }
+      ]
+    },
+    {
+      "id": "P09", "name": "Network segmentation programme",
+      "scores": { "strategic": 6, "roi": 2, "compliance": 8, "risk": 7 },
+      "activities": [
+        { "id": "i1", "name": "traffic study", "optimistic": 3, "likely": 4, "pessimistic": 8,
+          "cost_optimistic": 26, "cost_likely": 34, "cost_pessimistic": 52, "demand": { "ops": 3 } },
+        { "id": "i2", "name": "segment build", "optimistic": 6, "likely": 8, "pessimistic": 15,
+          "cost_optimistic": 88, "cost_likely": 110, "cost_pessimistic": 165,
+          "depends_on": ["i1"], "demand": { "dev": 2, "ops": 4 } },
+        { "id": "i3", "name": "policy enforcement", "optimistic": 2, "likely": 4, "pessimistic": 9,
+          "cost_optimistic": 30, "cost_likely": 40, "cost_pessimistic": 62,
+          "depends_on": ["i2"], "demand": { "ops": 3 } }
+      ]
+    },
+    {
+      "id": "P10", "name": "Incident response tooling",
+      "requires": ["P09"],
+      "scores": { "strategic": 4, "roi": 4, "compliance": 6, "risk": 3 },
+      "activities": [
+        { "id": "j1", "name": "tool selection", "optimistic": 1, "likely": 2, "pessimistic": 4,
+          "cost": 12, "demand": { "ops": 1 } },
+        { "id": "j2", "name": "rollout", "optimistic": 3, "likely": 4, "pessimistic": 8,
+          "cost_optimistic": 38, "cost_likely": 48, "cost_pessimistic": 70,
+          "depends_on": ["j1"], "demand": { "dev": 1, "ops": 3 } }
+      ]
+    },
+    {
+      "id": "P11", "name": "Mobile field application",
+      "scores": { "strategic": 5, "roi": 8, "compliance": 1, "risk": 6 },
+      "activities": [
+        { "id": "k1", "name": "field study", "optimistic": 2, "likely": 3, "pessimistic": 6,
+          "cost": 20, "demand": { "dev": 2 } },
+        { "id": "k2", "name": "application build", "optimistic": 6, "likely": 8, "pessimistic": 15,
+          "cost_optimistic": 82, "cost_likely": 105, "cost_pessimistic": 155,
+          "depends_on": ["k1"], "demand": { "dev": 4 } },
+        { "id": "k3", "name": "offline sync", "optimistic": 3, "likely": 5, "pessimistic": 11,
+          "cost_optimistic": 36, "cost_likely": 48, "cost_pessimistic": 78,
+          "depends_on": ["k2"], "demand": { "dev": 3 } }
+      ]
+    },
+    {
+      "id": "P12", "name": "Warehouse robotics integration",
+      "scores": { "strategic": 7, "roi": 9, "compliance": 2, "risk": 9 },
+      "activities": [
+        { "id": "l1", "name": "process mapping", "optimistic": 3, "likely": 5, "pessimistic": 9,
+          "cost_optimistic": 34, "cost_likely": 44, "cost_pessimistic": 68, "demand": { "dev": 2, "ops": 2 } },
+        { "id": "l2", "name": "controller integration", "optimistic": 7, "likely": 11, "pessimistic": 20,
+          "cost_optimistic": 140, "cost_likely": 178, "cost_pessimistic": 265,
+          "depends_on": ["l1"], "demand": { "dev": 5, "ops": 2 } },
+        { "id": "l3", "name": "floor acceptance", "optimistic": 2, "likely": 4, "pessimistic": 9,
+          "cost_optimistic": 28, "cost_likely": 38, "cost_pessimistic": 62,
+          "depends_on": ["l2"], "demand": { "dev": 2, "ops": 3 } }
+      ]
+    }
+  ]
+}
