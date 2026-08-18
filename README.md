@@ -51,7 +51,7 @@ There are **no third-party dependencies**. Not the solver, not the JSON reader, 
 framework. A stranger with a C++20 compiler and CMake can clone this and build it first time, and
 that is worth more than any library this project would otherwise have pulled in. The JSON reader is
 `src/json.cpp`, the branch and bound is `src/portfolio.cpp`, and the test runner is
-`tests/check.hpp`, a hundred and thirty lines registering cases with CTest.
+`tests/check.hpp`, 106 lines registering cases with CTest.
 
 ## Architecture
 
