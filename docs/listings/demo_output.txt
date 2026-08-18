@@ -1,0 +1,161 @@
+Quorum: portfolio selection under budget and capacity limits
+Reading scenarios/example.json
+
+Scenario
+========
+
+Scenario   : IT portfolio, planning round
+Candidates : 12 projects, 4 criteria
+Budget     : 1150
+Asked for  : 2106 (54.6 per cent of the ask is fundable)
+Capacity   : dev = 26.0 (engineers available in parallel)
+Capacity   : ops = 11.0 (operations staff available in parallel)
+
+Criteria weights from the pairwise judgements
+=============================================
+
+  criterion   direction  weight  label
+  ----------  ---------  ------  ---------------------
+  strategic   max        0.1891  fit with the strategy
+  roi         max        0.3509  expected return
+  compliance  max        0.3509  regulatory necessity
+  risk        min        0.1091  delivery risk
+
+  principal eigenvalue 4.0098, consistency index 0.0033, consistency ratio 0.0036
+  judgement matrix accepted against the 0.10 threshold
+
+Rankings, AHP against TOPSIS
+============================
+
+  project  AHP score  rank  TOPSIS score  rank  shift
+  -------  ---------  ----  ------------  ----  -----
+  P02      0.0966     1     0.6101        1     .
+  P08      0.0946     2     0.5947        2     .
+  P01      0.0915     3     0.5722        3     .
+  P05      0.0900     4     0.5654        4     .
+  P10      0.0824     5     0.4903        7     -2
+  P09      0.0813     6     0.5226        5     +1
+  P12      0.0811     7     0.4671        8     -1
+  P06      0.0805     8     0.5045        6     +2
+  P03      0.0797     9     0.4277        10    -1
+  P04      0.0796     10    0.4385        9     +1
+  P07      0.0756     11    0.3936        11    .
+  P11      0.0671     12    0.3919        12    .
+
+  Spearman rank correlation between the two rankings: 0.9580
+  projects placed differently by the two methods: 6 of 12
+
+Selected portfolio, scored by TOPSIS
+====================================
+
+  funded  cost  duration  value   requires
+  ------  ----  --------  ------  --------
+  P01     158   15.2      0.5722  -
+  P03     227   22.0      0.4277  -
+  P04     114   12.7      0.4385  P03
+  P07     110   11.8      0.3936  -
+  P08     141   14.2      0.5947  -
+  P09     193   17.8      0.5226  -
+  P11     180   17.8      0.3919  -
+
+  total value 3.3411, cost 1123 of 1150 budget, dev 26.0 of 26.0, ops 9.0 of 11.0
+  branch and bound: proved optimal, 357 nodes, 0.031 ms
+  greedy heuristic: value 3.2592 (97.55 per cent of the optimum), 0.006 ms
+
+  Not funded, and why:
+    project  cost  value   reason
+    -------  ----  ------  ----------------------------------------
+    P02      110   0.6101  costs 110 against 27 of remaining budget
+    P05      325   0.5654  costs 325 against 27 of remaining budget
+    P06      213   0.5045  costs 213 against 27 of remaining budget
+    P10      62    0.4903  costs 62 against 27 of remaining budget
+    P12      273   0.4671  costs 273 against 27 of remaining budget
+
+Programme schedule of the funded portfolio
+==========================================
+
+  project  duration  early start  early finish  late start  float  critical
+  -------  --------  -----------  ------------  ----------  -----  --------
+  P01      15.2      0.0          15.2          19.5        19.5
+  P03      22.0      0.0          22.0          0.0         0.0    yes
+  P04      12.7      22.0         34.7          22.0        0.0    yes
+  P07      11.8      0.0          11.8          22.8        22.8
+  P08      14.2      0.0          14.2          20.5        20.5
+  P09      17.8      0.0          17.8          16.8        16.8
+  P11      17.8      0.0          17.8          16.8        16.8
+
+  programme duration 34.7 periods
+  critical path     : P03 -> P04
+  PERT deviation    : 2.64 periods, so a 84.1 per cent chance of finishing within 37.3
+
+Monte Carlo over the funded portfolio
+=====================================
+
+  quantity    mean   std dev  p05    p50    p95
+  ----------  -----  -------  -----  -----  -----
+  total cost  1162   38.6     1100   1161   1227
+  completion  37.35  3.32     32.02  37.27  43.04
+
+  20000 samples in 16.6 ms
+  90 per cent central interval on cost      : [1100, 1227]
+  90 per cent central interval on completion: [32.02, 43.04] periods
+  probability the portfolio stays within the budget of 1150: 38.7 per cent
+
+Sensitivity to the criteria weights
+===================================
+
+  one criterion weight varied at a time, 16 runs in 0.5 ms
+
+  project  selected in  share    verdict
+  -------  -----------  -------  ----------
+  P01      15 of 16     93.8 %   knife-edge
+  P02      0 of 16      0.0 %    never
+  P03      16 of 16     100.0 %  stable
+  P04      16 of 16     100.0 %  stable
+  P05      0 of 16      0.0 %    never
+  P06      1 of 16      6.2 %    knife-edge
+  P07      16 of 16     100.0 %  stable
+  P08      15 of 16     93.8 %   knife-edge
+  P09      16 of 16     100.0 %  stable
+  P10      1 of 16      6.2 %    knife-edge
+  P11      16 of 16     100.0 %  stable
+  P12      0 of 16      0.0 %    never
+
+Sensitivity to the budget
+=========================
+
+  budget varied from 60 to 140 per cent, 9 runs in 0.3 ms
+
+  project  selected in  share    verdict
+  -------  -----------  -------  ----------
+  P01      8 of 9       88.9 %   knife-edge
+  P02      2 of 9       22.2 %   knife-edge
+  P03      6 of 9       66.7 %   knife-edge
+  P04      6 of 9       66.7 %   knife-edge
+  P05      0 of 9       0.0 %    never
+  P06      4 of 9       44.4 %   knife-edge
+  P07      9 of 9       100.0 %  stable
+  P08      9 of 9       100.0 %  stable
+  P09      9 of 9       100.0 %  stable
+  P10      2 of 9       22.2 %   knife-edge
+  P11      3 of 9       33.3 %   knife-edge
+  P12      0 of 9       0.0 %    never
+
+  Funded under each budget:
+
+  project  budget x0.60  budget x0.70  budget x0.80  budget x0.90  budget x1.00  budget x1.10  budget x1.20  budget x1.30  budget x1.40
+  -------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------
+  P01      x             x             x             .             x             x             x             x             x
+  P02      .             x             x             .             .             .             .             .             .
+  P03      .             .             .             x             x             x             x             x             x
+  P04      .             .             .             x             x             x             x             x             x
+  P05      .             .             .             .             .             .             .             .             .
+  P06      .             .             .             .             .             x             x             x             x
+  P07      x             x             x             x             x             x             x             x             x
+  P08      x             x             x             x             x             x             x             x             x
+  P09      x             x             x             x             x             x             x             x             x
+  P10      x             .             .             x             .             .             .             .             .
+  P11      .             .             x             x             x             .             .             .             .
+  P12      .             .             .             .             .             .             .             .             .
+
+Done.

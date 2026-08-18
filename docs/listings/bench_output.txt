@@ -1,0 +1,51 @@
+Quorum benchmarks. Every number below was produced by this run.
+
+Branch and bound against exhaustive enumeration
+===============================================
+
+  twenty instances per size, every subset enumerated for the reference answer
+
+  projects  instances  matched  search ms  enumeration ms  speed-up
+  --------  ---------  -------  ---------  --------------  --------
+  8         20         20/20    0.0039     0.021           5.4x
+  12        20         20/20    0.0172     0.365           21.2x
+  16        20         20/20    0.0432     5.780           133.9x
+  18        20         20/20    0.1069     32.353          302.8x
+
+Branch and bound against the greedy heuristic
+=============================================
+
+  five instances per size, two capacity dimensions, budget at 40 per cent of the ask
+
+  projects  exact value  greedy value  greedy of optimum  nodes  exact ms  greedy ms  proved
+  --------  -----------  ------------  -----------------  -----  --------  ---------  ------
+  10        0.5753       0.5197        89.87 %            74     0.008     0.007      5/5
+  14        0.7875       0.6940        87.84 %            225    0.018     0.004      5/5
+  18        1.1170       0.9141        81.11 %            920    0.077     0.008      5/5
+  22        1.2272       1.0708        87.43 %            3440   0.237     0.007      5/5
+  26        1.5857       1.2652        79.01 %            7937   0.753     0.013      5/5
+  30        1.8450       1.6092        86.58 %            18439  1.710     0.012      5/5
+  34        2.2365       1.8923        84.75 %            54127  5.530     0.015      5/5
+  38        2.4237       2.1413        88.53 %            73295  7.862     0.022      5/5
+
+Monte Carlo convergence
+=======================
+
+  scenario IT portfolio, planning round, 7 funded projects, fixed seed
+
+  samples  mean cost  p05 cost  p95 cost  p95 completion  ms
+  -------  ---------  --------  --------  --------------  ------
+  100      1161.3     1095.3    1219.8    42.465          0.1
+  1000     1160.7     1097.0    1227.1    42.711          1.0
+  10000    1162.2     1099.2    1226.0    42.949          12.8
+  100000   1161.6     1099.3    1226.3    43.029          123.8
+  1000000  1161.7     1099.6    1226.4    43.010          1422.3
+
+Sampling error across seeds
+===========================
+
+  samples  p95 cost, ten seeds  spread  relative spread
+  -------  -------------------  ------  ---------------
+  1000     1226.34              7.99    0.651 %
+  10000    1226.53              2.43    0.198 %
+  100000   1226.50              1.20    0.098 %
