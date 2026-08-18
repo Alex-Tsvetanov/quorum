@@ -16,30 +16,42 @@ The point is not to replace the manager's judgement. The point is to make the re
 reproducible: every assumption lives in a file you can version and diff, and every rejected project
 comes back with the constraint that rejected it.
 
-## Goals
+## What it does
 
-- Model a business process as a directed acyclic graph of activities with cost, duration and
-  per-period resource demand, and reject cyclic input at load time with a pointer to the offending edge.
-- Score candidate projects with two independent multi-criteria methods, AHP and TOPSIS, and report
-  where their rankings disagree instead of hiding the disagreement behind one number.
-- Solve portfolio selection exactly under budget, per-period capacity and precedence constraints.
-- Cross-check every solver result against a greedy heuristic lower bound, and fail loudly if the
-  solver returns something worse.
-- Produce a sensitivity report that separates the portfolio positions that survive every assumption
-  change from the ones that do not.
-- Keep scenario input and result output as versionable JSON documents with a fixed schema.
+- **Process model.** Activities with three-point durations, three-point costs, per-period resource
+  demand and precedence edges, loaded from one JSON document and validated on the way in. A cycle,
+  an unknown identifier or an out-of-order estimate is rejected with the offending element named.
+- **Critical path method.** Forward and backward pass, earliest and latest start and finish, total
+  float, and the critical path itself. The same code runs on activities inside a project and on
+  projects inside the funded programme.
+- **PERT.** Three-point estimates give an expected duration, a variance on the critical path, and a
+  probability of finishing by a given date from the normal approximation.
+- **Multi-criteria analysis, twice.** The analytic hierarchy process derives criteria weights from a
+  pairwise judgement matrix, reports the consistency ratio and refuses a matrix above the 0.10
+  threshold. TOPSIS ranks by relative closeness to the ideal point. Both run on the same input and
+  the report shows where they disagree.
+- **Portfolio selection.** Branch and bound with a linear relaxation bound, under a budget, several
+  resource capacities, funding prerequisites and mutual exclusions. A greedy heuristic runs beside
+  it as a control value: an exact solver that returns less than a feasible heuristic is wrong, not
+  slow, and the run stops.
+- **Risk.** Monte Carlo over the cost and duration estimates of the funded portfolio, producing a
+  confidence interval on total cost and on the completion date.
+- **Sensitivity.** Sweeps of the criteria weights and of the budget, reporting for each project
+  whether its place in the portfolio is stable or knife-edge.
 
 ## Technologies
 
 | Technology | Version or standard | Why |
 | --- | --- | --- |
 | C++20 | ISO/IEC 14882:2020 | Sensitivity analysis re-solves the same model hundreds of times, so solve time matters. |
-| CMake | 3.24 or newer | `FetchContent` pulls the dependencies without a vendored tree. |
-| OR-Tools CP-SAT | 9.x | Exact integer programming with multi-dimensional and precedence constraints, first-class C++ API. |
-| nlohmann/json | 3.11 or newer | Scenario and result documents are plain JSON; header-only, nothing to link. |
-| GoogleTest | 1.14 or newer | Unit tests for the graph, scoring and model-building code. |
-| Plain HTML and JavaScript | ES2020 | Scenario entry and result display. No build step, no framework, no bundler. |
+| CMake | 3.20 or newer | The whole build, no package manager, no configure-time download. |
 | LaTeX (pdfLaTeX) | TeX Live 2023 or newer | The report format is normative for the faculty and the template targets pdfLaTeX. |
+
+There are **no third-party dependencies**. Not the solver, not the JSON reader, not the test
+framework. A stranger with a C++20 compiler and CMake can clone this and build it first time, and
+that is worth more than any library this project would otherwise have pulled in. The JSON reader is
+`src/json.cpp`, the branch and bound is `src/portfolio.cpp`, and the test runner is
+`tests/check.hpp`, a hundred and thirty lines registering cases with CTest.
 
 ## Architecture
 
@@ -52,37 +64,85 @@ each have more than one implementation from day one.
 
 ```mermaid
 flowchart TD
-    UI[Web UI: scenario entry] -->|scenario.json| API[Presentation layer]
-    API --> MODEL[Model layer: DAG, invariants, critical path]
-    MODEL --> SCORE[Scoring layer: AHP / TOPSIS]
-    SCORE --> SELECT[Selection layer]
-    SELECT --> SOLVER[OR-Tools CP-SAT]
+    CLI[Command line: scenario file] -->|scenario.json| API[Presentation: main.cpp, report.cpp]
+    API --> MODEL[Model: model.cpp, cpm.cpp]
+    MODEL --> SCORE[Scoring: mcdm.cpp, AHP and TOPSIS]
+    SCORE --> SELECT[Selection: portfolio.cpp]
+    SELECT --> EXACT[Branch and bound, LP relaxation bound]
     SELECT --> GREEDY[Greedy heuristic: lower bound]
-    SOLVER --> CHECK{solver >= greedy?}
+    EXACT --> CHECK{exact >= greedy?}
     GREEDY --> CHECK
     CHECK -->|no| FAIL[Model error, stop]
-    CHECK -->|yes| SENS[Sensitivity sweep: budget, weights]
-    SENS -->|result.json| API
-    API --> UI
+    CHECK -->|yes| RISK[Monte Carlo: risk.cpp]
+    CHECK --> SENS[Sweeps: sensitivity.cpp]
+    RISK --> API
+    SENS --> API
 ```
 
 ## Build
 
+Verified on Windows 11 with g++ 15.2.0 (MinGW-w64), CMake 4.3.2 and Ninja 1.13.2. The exact
+commands, as run:
+
 ```bash
-git clone <local-path> quorum-it-business-management
-cd quorum-it-business-management
-
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
-
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
 ctest --test-dir build --output-on-failure
-
-# solve one scenario
-./build/quorum solve scenarios/example.json
-
-# sweep the budget and report which positions are stable
-./build/quorum sensitivity scenarios/example.json
 ```
+
+`-G Ninja` is a convenience, not a requirement; the default generator works too.
+
+## Run
+
+```bash
+# the whole pipeline on the bundled scenario: rankings, portfolio, schedule,
+# Monte Carlo and both sensitivity sweeps
+./build/quorum demo
+
+# or, through the build system, from any directory
+cmake --build build --target demo
+
+# individual stages
+./build/quorum solve       scenarios/example.json --method topsis
+./build/quorum sensitivity scenarios/example.json
+./build/quorum risk        scenarios/example.json --samples 100000
+
+# the measurements quoted in the report
+./build/quorum bench
+```
+
+On Windows the binary is `build\quorum.exe`. `--method` takes `ahp` or `topsis` and defaults to
+`topsis`.
+
+## Scenario format
+
+One JSON document, described in full in Appendix A of the report. Line comments starting with `//`
+are accepted, because a scenario is a document a human maintains and an unexplained number is worse
+than a one-character extension to the reader. The shape:
+
+```json
+{
+  "budget": 1150,
+  "criteria":  [ { "id": "roi", "direction": "max" } ],
+  "comparisons": [ [1, 0.5], [2, 1] ],
+  "resources": [ { "id": "dev", "capacity": 26 } ],
+  "projects": [
+    {
+      "id": "P01",
+      "scores": { "roi": 8 },
+      "requires": [], "excludes": [],
+      "activities": [
+        { "id": "a1", "optimistic": 2, "likely": 3, "pessimistic": 5,
+          "cost": 20, "depends_on": [], "demand": { "dev": 2 } }
+      ]
+    }
+  ]
+}
+```
+
+Durations and costs may be given either as a single value (`duration`, `cost`) or as a three-point
+estimate. A single value is the case where all three points coincide, so there is no second code
+path for it.
 
 ## Documentation
 
@@ -101,19 +161,20 @@ facts are marked in red with `\TODO{...}` and can be listed with `grep -rn TODO 
 
 - [x] Repository scaffold
 - [x] Report skeleton with all chapters and the reference list
-- [ ] Scenario and result JSON schema
-- [ ] Model layer: graph, invariants, critical path
-- [ ] Scoring layer: AHP
-- [ ] Scoring layer: TOPSIS
-- [ ] Selection layer: greedy heuristic
-- [ ] Selection layer: CP-SAT model
-- [ ] Sensitivity sweep
-- [ ] Web UI
-- [ ] Test suite
-- [ ] Experiments run and results written up
+- [x] Scenario JSON reader and schema validation
+- [x] Model layer: graph, invariants, critical path, PERT
+- [x] Scoring layer: AHP with the consistency ratio
+- [x] Scoring layer: TOPSIS
+- [x] Selection layer: greedy heuristic
+- [x] Selection layer: branch and bound with a linear relaxation bound
+- [x] Monte Carlo risk analysis
+- [x] Sensitivity sweeps over the weights and the budget
+- [x] Test suite, 69 cases across 7 suites plus the demo, registered with CTest
+- [x] Experiments run and results written up
 
-Nothing under `src/`, `include/`, `tests/` or `web/` is implemented yet. The build commands above
-describe the intended shape, not a working binary.
+The web front end listed in the first draft of this file was dropped. The results are text tables
+and the command line prints them; a browser adds a second language and a second build for no gain
+the report would have used.
 
 ## License
 
