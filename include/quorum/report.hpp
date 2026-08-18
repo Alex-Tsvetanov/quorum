@@ -49,4 +49,7 @@ void risk(std::ostream& os, const model::Scenario& sc, const quorum::risk::Resul
 
 void sensitivity(std::ostream& os, const std::string& title, const sensitivity::Result& r);
 
+// A grid of which projects were funded under which run of a sweep.
+void membership(std::ostream& os, const model::Scenario& sc, const sensitivity::Result& r);
+
 }  // namespace quorum::report

@@ -116,6 +116,7 @@ private:
     // bound, so the smallest such bound over the dimensions is also valid, and
     // it is tighter than any one of them. The prerequisite and exclusion
     // constraints are dropped as well, which only relaxes the problem further.
+    //LSTBEGINbound
     double relaxation_bound(std::size_t from, double budget_left,
                             const std::vector<double>& capacity_left) const {
         double best = std::numeric_limits<double>::infinity();
@@ -142,6 +143,7 @@ private:
         }
         return best;
     }
+    //LSTENDbound
 
     bool can_include(std::size_t item, double budget_left,
                      const std::vector<double>& capacity_left) const {

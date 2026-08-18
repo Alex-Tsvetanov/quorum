@@ -194,4 +194,22 @@ void sensitivity(std::ostream& os, const std::string& title, const sensitivity::
     t.write(os);
 }
 
+void membership(std::ostream& os, const model::Scenario& sc, const sensitivity::Result& r) {
+    // One column per run, one row per project. The share alone says how often a
+    // project was funded; this says under which assumptions, which is what makes
+    // an interval of budgets readable rather than a single percentage.
+    std::vector<std::string> headers{"project"};
+    for (const auto& p : r.points) headers.push_back(p.label);
+    Table t(std::move(headers));
+    for (std::size_t i = 0; i < sc.projects.size(); ++i) {
+        std::vector<std::string> cells{sc.projects[i].id};
+        for (const auto& p : r.points) {
+            const bool in = std::find(p.selected.begin(), p.selected.end(), i) != p.selected.end();
+            cells.push_back(in ? "x" : ".");
+        }
+        t.row(std::move(cells));
+    }
+    t.write(os);
+}
+
 }  // namespace quorum::report

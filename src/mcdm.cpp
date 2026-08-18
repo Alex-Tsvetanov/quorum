@@ -71,6 +71,7 @@ double random_index(std::size_t n) {
     return table[std::min(n, last)];
 }
 
+//LSTBEGINahp
 AhpResult analyse_comparisons(const Matrix& m) {
     check_square_positive(m);
     const std::size_t n = m.size();
@@ -116,6 +117,7 @@ AhpResult analyse_comparisons(const Matrix& m) {
     out.consistent = out.consistency_ratio <= kConsistencyThreshold;
     return out;
 }
+//LSTENDahp
 
 std::vector<double> ahp_weights(const Matrix& comparisons, double threshold) {
     AhpResult r = analyse_comparisons(comparisons);

@@ -97,6 +97,7 @@ const TaskSchedule& Schedule::at(const std::string& id) const {
     throw UnknownTaskError("no schedule entry for '" + id + "'");
 }
 
+//LSTBEGINtoposort
 std::vector<std::size_t> topological_order(const Network& net) {
     const auto map = index_map(net);
     const std::size_t n = net.tasks.size();
@@ -135,6 +136,7 @@ std::vector<std::size_t> topological_order(const Network& net) {
     }
     return order;
 }
+//LSTENDtoposort
 
 Schedule schedule_with(const Network& net, const std::vector<double>& durations) {
     const std::size_t n = net.tasks.size();

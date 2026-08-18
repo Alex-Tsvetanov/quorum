@@ -114,8 +114,11 @@ int cmd_sensitivity(const std::vector<std::string>& args, std::ostream& os) {
     report::sensitivity(os, "one criterion weight varied at a time", w);
 
     report::heading(os, "Sensitivity to the budget");
-    const auto b = sensitivity::sweep_budget(a.scenario, a.weights, {0.6, 0.8, 1.0, 1.2, 1.4}, m);
+    const auto b = sensitivity::sweep_budget(
+        a.scenario, a.weights, {0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4}, m);
     report::sensitivity(os, "budget varied from 60 to 140 per cent", b);
+    os << "\n  Funded under each budget:\n\n";
+    report::membership(os, a.scenario, b);
     return 0;
 }
 
@@ -163,8 +166,11 @@ int cmd_demo(const std::vector<std::string>& args, std::ostream& os) {
                         sensitivity::sweep_weights(a.scenario, a.weights, {0.5, 0.75, 1.25, 1.5}, m));
 
     report::heading(os, "Sensitivity to the budget");
-    report::sensitivity(os, "budget varied from 60 to 140 per cent",
-                        sensitivity::sweep_budget(a.scenario, a.weights, {0.6, 0.8, 1.0, 1.2, 1.4}, m));
+    const auto budget_sweep = sensitivity::sweep_budget(
+        a.scenario, a.weights, {0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4}, m);
+    report::sensitivity(os, "budget varied from 60 to 140 per cent", budget_sweep);
+    os << "\n  Funded under each budget:\n\n";
+    report::membership(os, a.scenario, budget_sweep);
 
     os << "\nDone.\n";
     return 0;

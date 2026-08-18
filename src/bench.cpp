@@ -71,6 +71,64 @@ portfolio::Instance generate(std::size_t n, std::uint64_t seed) {
     return inst;
 }
 
+// Exhaustive enumeration over every subset. Deliberately written out here rather
+// than shared with the search: an independent answer is only independent if it
+// shares no code with the thing it is checking.
+double brute_force(const portfolio::Instance& inst) {
+    const std::size_t n = inst.size();
+    double best = 0.0;
+    for (std::uint64_t mask = 0; mask < (std::uint64_t{1} << n); ++mask) {
+        double value = 0.0, cost = 0.0;
+        std::vector<double> used(inst.capacity.size(), 0.0);
+        bool feasible = true;
+        for (std::size_t i = 0; i < n && feasible; ++i) {
+            if (!((mask >> i) & 1)) continue;
+            value += inst.value[i];
+            cost += inst.cost[i];
+            for (std::size_t r = 0; r < inst.capacity.size(); ++r) used[r] += inst.usage[r][i];
+            for (std::size_t p : inst.prerequisites[i])
+                if (!((mask >> p) & 1)) feasible = false;
+            for (std::size_t x : inst.exclusions[i])
+                if ((mask >> x) & 1) feasible = false;
+        }
+        if (!feasible || cost > inst.budget + 1e-9) continue;
+        for (std::size_t r = 0; r < inst.capacity.size(); ++r)
+            if (used[r] > inst.capacity[r] + 1e-9) feasible = false;
+        if (feasible) best = std::max(best, value);
+    }
+    return best;
+}
+
+void bench_correctness(std::ostream& os) {
+    report::heading(os, "Branch and bound against exhaustive enumeration");
+    os << "  twenty instances per size, every subset enumerated for the reference answer\n\n";
+
+    report::Table t({"projects", "instances", "matched", "search ms", "enumeration ms",
+                     "speed-up"});
+    for (std::size_t n : {8u, 12u, 16u, 18u}) {
+        constexpr int kInstances = 20;
+        int matched = 0;
+        double search_ms = 0.0, brute_ms = 0.0;
+        for (int rep = 0; rep < kInstances; ++rep) {
+            const auto inst = generate(n, 90000 + 31 * n + static_cast<std::uint64_t>(rep));
+            const auto exact = portfolio::solve_exact(inst);
+            const auto start = std::chrono::steady_clock::now();
+            const double reference = brute_force(inst);
+            brute_ms +=
+                std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count() *
+                1000.0;
+            search_ms += exact.seconds * 1000.0;
+            if (std::fabs(exact.value - reference) < 1e-9) ++matched;
+        }
+        t.row({std::to_string(n), std::to_string(kInstances),
+               std::to_string(matched) + "/" + std::to_string(kInstances),
+               report::number(search_ms / kInstances, 4),
+               report::number(brute_ms / kInstances, 3),
+               report::number(brute_ms / std::max(search_ms, 1e-9), 1) + "x"});
+    }
+    t.write(os);
+}
+
 void bench_selection(std::ostream& os) {
     report::heading(os, "Branch and bound against the greedy heuristic");
     os << "  five instances per size, two capacity dimensions, budget at 40 per cent of the ask\n\n";
@@ -162,6 +220,7 @@ int run_bench(const std::vector<std::string>& args, std::ostream& os) {
         if (args[i] == "--scenario") path = args[i + 1];
 
     os << "Quorum benchmarks. Every number below was produced by this run.\n";
+    bench_correctness(os);
     bench_selection(os);
     bench_montecarlo(os, path);
     os << "\n";
