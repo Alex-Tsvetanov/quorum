@@ -1,112 +1,54 @@
-% ПРИЛОЖЕНИЯ, без номер на раздел.
-% По изискванията: изходен текст на програми, формати на структури от данни,
-% екранни форми, получени резултати.
-\section*{ПРИЛОЖЕНИЯ}
+% ПРИЛОЖЕНИЕ, без номер на раздел.
+% Изходният текст НЕ се вмъква тук. Хранилището е публично и една таблица с
+% указател към файловете е по-полезна от двадесет страници преписан код.
+\section*{ПРИЛОЖЕНИЕ}
 \label{sec:appendix}
-\addcontentsline{toc}{section}{ПРИЛОЖЕНИЯ}
+\addcontentsline{toc}{section}{ПРИЛОЖЕНИЕ}
 
-\subsection*{Приложение А. Схема на сценария}
-\addcontentsline{toc}{subsection}{Приложение А. Схема на сценария}
+Целият изходен текст, вложеният сценарий, тестовете и пълният изход на командите
+\code{quorum demo} и \code{quorum bench} са в публичното хранилище
+\url{https://github.com/Alex-Tsvetanov/quorum}. Построяване и изпълнение, без
+външни зависимости, само с компилатор за C++20 и CMake:
+\code{cmake -S . -B build -DCMAKE\_BUILD\_TYPE=Release}, след това
+\code{cmake --build build} и \code{./build/quorum demo}. Указателят кое изчисление
+в кой файл живее е в Табл.~\ref{tab:sources}; броят редове е от \code{wc -l} към
+състоянието, от което са получени числата в Раздел~\ref{sec:results}.
 
-Сценарият е един JSON документ. Полетата му са изброени в
-Табл.~\ref{tab:schema}. Всяка продължителност и всяка стойност се задава или с
-едно число, или с тройна оценка; едното число е случаят, в който трите точки
-съвпадат, затова за него няма отделен път в кода.
-
-{\footnotesize
-\begin{longtable}{@{}L{4.4cm}L{1.6cm}L{2.6cm}L{3.9cm}@{}}
-\caption{Полета на входния документ}
-\label{tab:schema} \\
+\begin{table}[H]
+\centering
+\caption{Изходен текст: къде живее всяко изчисление}
+\label{tab:sources}
+\small
+\begin{tabular}{@{}L{3.2cm}L{7.4cm}r@{}}
 \toprule
-\textbf{Поле} & \textbf{Тип} & \textbf{Задължително} & \textbf{Ограничение} \\
+\textbf{Файл в \code{src/}} & \textbf{Съдържание} & \textbf{Редове} \\
 \midrule
-\endfirsthead
-\multicolumn{4}{@{}l}{\itshape продължение на Табл.~\ref{tab:schema}}\\
-\toprule
-\textbf{Поле} & \textbf{Тип} & \textbf{Задължително} & \textbf{Ограничение} \\
+\code{json.cpp} & четец и записвач на JSON с коментари & 368 \\
+\code{model.cpp} & сценарий, инварианти, изведени величини & 271 \\
+\code{cpm.cpp} & топологично подреждане, критичен път, PERT & 245 \\
+\code{mcdm.cpp} & тегла по AHP, съгласуваност, TOPSIS & 244 \\
+\code{portfolio.cpp} & разклоняване и ограничаване, лаком алгоритъм & 345 \\
+\code{risk.cpp} & Монте Карло, триъгълно разпределение & 162 \\
+\code{sensitivity.cpp} & сканиране по тегла и по бюджет & 132 \\
+\code{report.cpp} & таблици и обяснения на отхвърлянето & 215 \\
+\code{bench.cpp}, \code{main.cpp} & измерванията и командният ред & 441 \\
 \midrule
-\endhead
-\code{name} & низ & не & свободен текст \\
-\code{budget} & число & да & неотрицателно \\
-\code{criteria} & списък & да & непразен \\
-\code{criteria[].id} & низ & да & уникален \\
-\code{criteria[].direction} & низ & не & \code{max} или \code{min}, по подразбиране \code{max} \\
-\code{criteria[].weight} & число & условно & неотрицателно; задължително, ако липсва \code{comparisons} \\
-\code{comparisons} & матрица & условно & квадратна върху критериите, положителна, реципрочна \\
-\code{resources} & списък & не & може да е празен \\
-\code{resources[].id} & низ & да & уникален \\
-\code{resources[].capacity} & число & да & неотрицателно \\
-\code{projects} & списък & да & непразен \\
-\code{projects[].id} & низ & да & уникален \\
-\code{projects[].scores} & обект & да & по една оценка за всеки критерий \\
-\code{projects[].requires} & списък & не & съществуващи идентификатори, без цикъл \\
-\code{projects[].excludes} & списък & не & съществуващи идентификатори, различни от \code{requires} \\
-\code{projects[].activities} & списък & да & непразен \\
-\code{...activities[].id} & низ & да & уникален в рамките на проекта \\
-\code{...duration} & число & условно & неотрицателно; алтернатива на тройката \\
-\code{...optimistic}, \code{likely}, \code{pessimistic} & числа & условно & $o \le m \le p$, неотрицателни \\
-\code{...cost} & число & условно & неотрицателно; алтернатива на тройката \\
-\code{...cost\_optimistic}, \code{cost\_likely}, \code{cost\_pessimistic} & числа & условно & $o \le m \le p$, неотрицателни \\
-\code{...depends\_on} & списък & не & съществуващи дейности, без цикъл \\
-\code{...demand} & обект & не & по ресурс, неотрицателно \\
+\code{include/quorum/} & осем публични заглавни файла & 594 \\
+\code{tests/} & 69 случая в седем групи и рамката за тестване & 1172 \\
+\code{scenarios/} & съставният сценарий с дванадесет проекта & 206 \\
 \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{table}
 
-Четецът приема и коментари от две наклонени черти до края на реда, което не е
-част от стандарта на JSON. Обосновката е в Раздел~\ref{sec:alternatives}.
-Началото на вложения сценарий е показано в Листинг~\ref{lst:scenario}.
-
-\lstinputlisting[language={}, firstline=1, lastline=42,
-                 caption={Начало на \code{scenarios/example.json}},
-                 label=lst:scenario]{../scenarios/example.json}
-
-\subsection*{Приложение Б. Изход на системата}
-\addcontentsline{toc}{subsection}{Приложение Б. Изход на системата}
-
-Интерфейсът е команден ред и изходът е текст, затова екранни форми в смисъла на
-графичен интерфейс няма и това приложение ги замества. Листинг~\ref{lst:demo}
-съдържа целия изход на командата \code{quorum demo} върху вложения сценарий,
-включително обяснението за всеки отхвърлен проект и решетката на устойчивостта.
-Това е изпълнението, от което са взети числата в Раздел~\ref{sec:results}.
-
-\lstinputlisting[language={}, basicstyle=\tiny\ttfamily, numbers=none,
-                 caption={Изход на \code{quorum demo}},
-                 label=lst:demo]{listings/demo_output.txt}
-
-\subsection*{Приложение В. Изходен текст на ключовите изчисления}
-\addcontentsline{toc}{subsection}{Приложение В. Изходен текст}
-
-Листингите по-долу се вмъкват от действителните файлове по маркери в изходния
-текст, а не се преписват, така че не могат да се разминат с това, което се
-компилира.
-
-\lstinputlisting[linerange={//LSTBEGINtoposort-//LSTENDtoposort},
-                 includerangemarker=false,
-                 caption={Топологично подреждане с посочване на цикъла,
-                          \code{src/cpm.cpp}},
-                 label=lst:toposort]{../src/cpm.cpp}
-
-\lstinputlisting[linerange={//LSTBEGINahp-//LSTENDahp},
-                 includerangemarker=false,
-                 caption={Тегла и коефициент на съгласуваност по аналитичната
-                          йерархия, \code{src/mcdm.cpp}},
-                 label=lst:ahp]{../src/mcdm.cpp}
-
-\lstinputlisting[linerange={//LSTBEGINbound-//LSTENDbound},
-                 includerangemarker=false,
-                 caption={Горна граница от линейната релаксация,
-                          \code{src/portfolio.cpp}},
-                 label=lst:bound]{../src/portfolio.cpp}
-
-\subsection*{Приложение Г. Пълни резултати от измерванията}
-\addcontentsline{toc}{subsection}{Приложение Г. Пълни резултати}
-
-Листинг~\ref{lst:bench} съдържа целия изход на командата \code{quorum bench},
-от която са извлечени Табл.~\ref{tab:correctness},
-Табл.~\ref{tab:exact-greedy}, Табл.~\ref{tab:mc} и Табл.~\ref{tab:mc-seeds}.
-Средата на измерването е описана в Табл.~\ref{tab:environment}.
-
-\lstinputlisting[language={}, basicstyle=\scriptsize\ttfamily, numbers=none,
-                 caption={Изход на \code{quorum bench}},
-                 label=lst:bench]{listings/bench_output.txt}
+\textbf{Схема на сценария.} Сценарият е един JSON документ. Задължителни са
+\code{budget}, \code{criteria} и \code{projects}. Критерият носи \code{id} и по
+избор \code{direction}, \code{max} или \code{min}; теглата се задават пряко чрез
+\code{weight} или се извеждат от квадратната положителна реципрочна матрица
+\code{comparisons}. Ресурсът носи \code{id} и \code{capacity}. Проектът носи
+\code{id}, оценка по всеки критерий в \code{scores}, по избор \code{requires} и
+\code{excludes}, и непразен списък \code{activities}. Дейността носи \code{id},
+\code{depends\_on} и \code{demand} по ресурс. Продължителността и стойността се
+задават или с едно число, \code{duration} и \code{cost}, или с тройна оценка,
+\code{optimistic}, \code{likely} и \code{pessimistic}, със същите представки за
+стойността; едното число е случаят, в който трите точки съвпадат, затова за него
+няма отделен път в кода.
