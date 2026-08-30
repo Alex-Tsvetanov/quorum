@@ -6,8 +6,21 @@
   const method = document.getElementById("method");
   const loadExample = document.getElementById("load-example");
 
+  // Same rounding as report.cpp's snprintf("%.*f"): half rounds to even, so the
+  // page never disagrees with the command line on a displayed figure.
   function num(x, decimals) {
-    return Number(x).toFixed(decimals);
+    const n = Number(x);
+    if (!Number.isFinite(n)) return String(x);
+    const sign = n < 0 ? -1 : 1;
+    const scale = Math.pow(10, decimals);
+    const scaled = Math.abs(n) * scale;
+    const whole = Math.floor(scaled);
+    const frac = scaled - whole;
+    let rounded = whole;
+    if (frac > 0.5) rounded = whole + 1;
+    else if (frac < 0.5) rounded = whole;
+    else rounded = whole % 2 === 0 ? whole : whole + 1;
+    return (sign * rounded / scale).toFixed(decimals);
   }
 
   function el(tag, className, text) {
