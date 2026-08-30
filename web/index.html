@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quorum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="mast">
+    <p class="brand">Quorum</p>
+    <h1>Which projects to fund, and why the rest stopped.</h1>
+    <p class="lead">Paste a scenario. The page asks the same engine as the command line; it does not rank or select on its own.</p>
+  </header>
+
+  <form id="form" class="scene">
+    <label class="doc-label" for="scenario">Scenario</label>
+    <textarea id="scenario" name="scenario" spellcheck="false" required></textarea>
+    <div class="actions">
+      <button type="button" id="load-example">Load bundled scenario</button>
+      <label class="method">
+        Scoring
+        <select id="method" name="method">
+          <option value="topsis" selected>TOPSIS</option>
+          <option value="ahp">AHP</option>
+        </select>
+      </label>
+      <button type="submit" id="run">Recommend</button>
+    </div>
+    <p class="status" id="status" hidden></p>
+  </form>
+
+  <div id="results" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

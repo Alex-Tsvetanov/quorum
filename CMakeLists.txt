@@ -24,11 +24,23 @@ add_library(quorum_core
   src/risk.cpp
   src/sensitivity.cpp
   src/report.cpp
+  src/http.cpp
+  src/net.cpp
+  src/analyse.cpp
+  src/web.cpp
 )
 target_include_directories(quorum_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+if(WIN32)
+  target_compile_definitions(quorum_core PUBLIC _WIN32_WINNT=0x0601 WIN32_LEAN_AND_MEAN NOMINMAX)
+  target_link_libraries(quorum_core PUBLIC ws2_32)
+endif()
+
 add_executable(quorum src/main.cpp src/bench.cpp)
 target_link_libraries(quorum PRIVATE quorum_core)
+target_compile_definitions(quorum PRIVATE
+  QUORUM_WEB_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/web"
+  QUORUM_SCENARIO_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scenarios")
 
 enable_testing()
 add_executable(quorum_tests
@@ -40,14 +52,17 @@ add_executable(quorum_tests
   tests/test_portfolio.cpp
   tests/test_risk.cpp
   tests/test_sensitivity.cpp
+  tests/test_http.cpp
+  tests/test_web.cpp
 )
 target_link_libraries(quorum_tests PRIVATE quorum_core)
 target_include_directories(quorum_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_compile_definitions(quorum_tests PRIVATE
-  QUORUM_SCENARIO_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scenarios")
+  QUORUM_SCENARIO_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scenarios"
+  QUORUM_WEB_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/web")
 
 # One test binary, one CTest entry per suite. The runner filters by suite name.
-foreach(suite json model cpm mcdm portfolio risk sensitivity)
+foreach(suite json model cpm mcdm portfolio risk sensitivity http web)
   add_test(NAME ${suite} COMMAND quorum_tests ${suite})
 endforeach()
 
@@ -57,5 +72,10 @@ add_test(NAME demo COMMAND quorum demo
 
 add_custom_target(demo
   COMMAND quorum demo --scenario ${CMAKE_CURRENT_SOURCE_DIR}/scenarios/example.json
+  DEPENDS quorum
+  USES_TERMINAL)
+
+add_custom_target(serve
+  COMMAND quorum serve
   DEPENDS quorum
   USES_TERMINAL)

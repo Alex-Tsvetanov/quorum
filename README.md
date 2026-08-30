@@ -45,13 +45,15 @@ comes back with the constraint that rejected it.
 | --- | --- | --- |
 | C++20 | ISO/IEC 14882:2020 | Sensitivity analysis re-solves the same model hundreds of times, so solve time matters. |
 | CMake | 3.20 or newer | The whole build, no package manager, no configure-time download. |
+| HTTP/1.1 | RFC 9112 | The same process serves the page and the analysis JSON. Parsed in project code. |
+| HTML, CSS, JS | in-tree, no package | The browser client. No npm, no framework, no second solver. |
 | LaTeX (pdfLaTeX) | TeX Live 2023 or newer | The report format is normative for the faculty and the template targets pdfLaTeX. |
 
 There are **no third-party dependencies**. Not the solver, not the JSON reader, not the test
-framework. A stranger with a C++20 compiler and CMake can clone this and build it first time, and
-that is worth more than any library this project would otherwise have pulled in. The JSON reader is
-`src/json.cpp`, the branch and bound is `src/portfolio.cpp`, and the test runner is
-`tests/check.hpp`, 106 lines registering cases with CTest.
+framework, not the HTTP server, not the page. A stranger with a C++20 compiler and CMake can clone
+this and build it first time, and that is worth more than any library this project would otherwise
+have pulled in. The JSON reader is `src/json.cpp`, the branch and bound is `src/portfolio.cpp`,
+the HTTP parser is `src/http.cpp`, and the test runner is `tests/check.hpp`.
 
 ## Architecture
 
@@ -59,12 +61,15 @@ Four layers with a one-way dependency chain. The model layer holds the process g
 candidate projects and depends on nothing. The scoring layer turns criteria into one number per
 project. The selection layer builds and solves the integer program. The presentation layer accepts
 a scenario, drives the other three, and returns the result together with the explanation of why
-each project was kept or dropped. The boundaries sit where they do because scoring and selection
-each have more than one implementation from day one.
+each project was kept or dropped. The command line prints that result as text. The same process
+can serve a static page that posts the scenario and renders the JSON. The boundaries sit where
+they do because scoring and selection each have more than one implementation from day one.
 
 ```mermaid
 flowchart TD
-    CLI[Command line: scenario file] -->|scenario.json| API[Presentation: main.cpp, report.cpp]
+    CLI[Command line: scenario file] -->|scenario.json| API[Presentation: analyse.cpp, report.cpp]
+    WEB[Browser: web/] -->|HTTP| SERVE[web.cpp]
+    SERVE --> API
     API --> MODEL[Model: model.cpp, cpm.cpp]
     MODEL --> SCORE[Scoring: mcdm.cpp, AHP and TOPSIS]
     SCORE --> SELECT[Selection: portfolio.cpp]
@@ -109,10 +114,15 @@ cmake --build build --target demo
 
 # the measurements quoted in the report
 ./build/quorum bench
+
+# the decision-support page, same engine as the commands above
+./build/quorum serve --port 8080
+# then open http://localhost:8080
 ```
 
 On Windows the binary is `build\quorum.exe`. `--method` takes `ahp` or `topsis` and defaults to
-`topsis`.
+`topsis`. `serve` reads the client files from `web/` and the bundled scenario from
+`scenarios/example.json`; `--web` and `--scenario` override those paths.
 
 ## Scenario format
 
@@ -169,12 +179,14 @@ facts are marked in red with `\TODO{...}` and can be listed with `grep -rn TODO 
 - [x] Selection layer: branch and bound with a linear relaxation bound
 - [x] Monte Carlo risk analysis
 - [x] Sensitivity sweeps over the weights and the budget
-- [x] Test suite, 69 cases across 7 suites plus the demo, registered with CTest
+- [x] Test suite, 83 cases across 9 suites plus the demo, registered with CTest
 - [x] Experiments run and results written up
+- [x] Web front end: static HTML/CSS/JS served by the same process
 
-The web front end listed in the first draft of this file was dropped. The results are text tables
-and the command line prints them; a browser adds a second language and a second build for no gain
-the report would have used.
+The page loads a scenario, shows the recommended portfolio, the constraint that stopped each
+rejected project, and the Monte Carlo risk of the funded set. It does not invent figures: every
+number on the page is the engine's. It does not track execution, post to a ledger, or talk to an
+ERP.
 
 ## License
 

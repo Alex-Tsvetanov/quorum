@@ -5,14 +5,16 @@
 \label{sec:appendix}
 \addcontentsline{toc}{section}{ПРИЛОЖЕНИЕ}
 
-Целият изходен текст, вложеният сценарий, тестовете и пълният изход на командите
-\code{quorum demo} и \code{quorum bench} са в публичното хранилище
-\url{https://github.com/Alex-Tsvetanov/quorum}. Построяване и изпълнение, без
-външни зависимости, само с компилатор за C++20 и CMake:
+Целият изходен текст, вложеният сценарий, тестовете, уеб клиентът и пълният
+изход на командите \code{quorum demo} и \code{quorum bench} са в публичното
+хранилище \url{https://github.com/Alex-Tsvetanov/quorum}. Построяване и
+изпълнение, без външни зависимости, само с компилатор за C++20 и CMake:
 \code{cmake -S . -B build -DCMAKE\_BUILD\_TYPE=Release}, след това
-\code{cmake --build build} и \code{./build/quorum demo}. Указателят кое изчисление
-в кой файл живее е в Табл.~\ref{tab:sources}; броят редове е от \code{wc -l} към
-състоянието, от което са получени числата в Раздел~\ref{sec:results}.
+\code{cmake --build build} и \code{./build/quorum demo}. Уеб страницата се вдига с
+\code{./build/quorum serve}. Указателят кое изчисление в кой файл живее е в
+Табл.~\ref{tab:sources}; броят редове на ядрото е от \code{wc -l} към състоянието,
+от което са получени числата в Раздел~\ref{sec:results}, а редовете на
+представянето са към състоянието с уеб клиента.
 
 \begin{table}[H]
 \centering
@@ -31,10 +33,13 @@
 \code{risk.cpp} & Монте Карло, триъгълно разпределение & 162 \\
 \code{sensitivity.cpp} & сканиране по тегла и по бюджет & 132 \\
 \code{report.cpp} & таблици и обяснения на отхвърлянето & 215 \\
-\code{bench.cpp}, \code{main.cpp} & измерванията и командният ред & 441 \\
+\code{analyse.cpp} & общият конвейер към доклада и към JSON & 213 \\
+\code{http.cpp}, \code{net.cpp}, \code{web.cpp} & HTTP/1.1, сокети, маршрутизация & 580 \\
+\code{bench.cpp}, \code{main.cpp} & измерванията, командният ред и \code{serve} & 407 \\
 \midrule
-\code{include/quorum/} & осем публични заглавни файла & 594 \\
-\code{tests/} & 69 случая в седем групи и рамката за тестване & 1172 \\
+\code{include/quorum/} & дванадесет публични заглавни файла & 803 \\
+\code{tests/} & 83 случая в девет групи и рамката за тестване & 1432 \\
+\code{web/} & страницата: HTML, CSS и JavaScript без пакетна система & 538 \\
 \code{scenarios/} & съставният сценарий с дванадесет проекта & 206 \\
 \bottomrule
 \end{tabular}
